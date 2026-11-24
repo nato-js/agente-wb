@@ -1,0 +1,16 @@
+node_modules
+.cloudflare
+.dev.vars
+.env
+.env.*
+!.env.example
+dist
+web/dist
+crm-ui/dist
+crm-ui/.astro
+.astro
+.cursor
+.agents
+.impeccable
+skills-lock.json
+*.tsbuildinfo

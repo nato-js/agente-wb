@@ -1,0 +1,688 @@
+---
+import "@fontsource/atkinson-hyperlegible/latin-400.css";
+import "@fontsource/atkinson-hyperlegible/latin-700.css";
+import "@fontsource/petrona/latin-500.css";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#24362c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Bandeja" />
+    <link rel="manifest" href="/bandeja/manifest.webmanifest" />
+    <link rel="icon" href="/bandeja/icono/192.png" />
+    <link rel="apple-touch-icon" href="/bandeja/icono/192.png" />
+    <title>Bandeja de Extensiones</title>
+    <style is:global>
+      :root {
+        --paper: #f3eee3;
+        --sage: #3a5344;
+        --sage-deep: #24362c;
+        --ink: #231e1a;
+        --ink-soft: #3f3832;
+        --cedar: #6a4e38;
+        --persimmon: #b4532a;
+        --persimmon-deep: #8a3b1c;
+        --line: #e4d6c2;
+        color-scheme: light;
+        caret-color: var(--persimmon);
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        font-family: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
+        font-size: 1.0625rem;
+        line-height: 1.45;
+        color: var(--ink);
+        background: var(--paper);
+      }
+      ::selection { background: var(--sage); color: var(--paper); }
+      :focus-visible { outline: 2px solid var(--persimmon); outline-offset: 3px; }
+      * { scrollbar-color: var(--sage) var(--paper); }
+      h1, h2, strong.cifra { font-family: Petrona, Palatino, serif; font-weight: 500; }
+      h2 { margin: 0; font-size: 1.25rem; }
+      .skip { position: absolute; left: 0.75rem; top: -3rem; background: #fffdf8; color: var(--ink); padding: 0.4rem 0.6rem; }
+      .skip:focus { top: 0.75rem; }
+      button, input, textarea { font: inherit; }
+      button { cursor: pointer; }
+      .esperando #app, .esperando #entrar, .sin-sesion #app, .con-sesion #entrar { display: none; }
+      #entrar {
+        max-width: 24rem;
+        margin: 12vh auto;
+        padding: 1.5rem;
+        background: #fffdf8;
+        display: flex;
+        flex-direction: column;
+      }
+      #entrar h1 { margin: 0 0 0.4rem; font-size: 2rem; }
+      label { display: block; margin: 1rem 0 0.35rem; font-weight: 700; }
+      input, textarea {
+        width: 100%;
+        padding: 0.7rem 0.75rem;
+        border: 1px solid var(--cedar);
+        background: var(--paper);
+        color: var(--ink);
+      }
+      textarea { min-height: 3.4rem; resize: vertical; }
+      .clave { position: relative; }
+      .clave input { padding-right: 6.2rem; }
+      #ver-clave {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        margin: 0;
+        padding: 0 0.8rem;
+        background: transparent;
+        color: var(--sage-deep);
+        border: 0;
+        font-weight: 700;
+      }
+      button.enviar, #entrar button[type="submit"], #instalar-ahora {
+        margin-top: 0.8rem;
+        background: var(--sage);
+        color: var(--paper);
+        border: 0;
+        padding: 0.75rem 1rem;
+      }
+      button.enviar:disabled, #entrar button[type="submit"]:disabled { opacity: 0.55; }
+      #entrar .instalar {
+        margin-top: 0.7rem;
+        background: transparent;
+        color: var(--sage-deep);
+        border: 1px solid var(--cedar);
+        padding: 0.7rem 1rem;
+      }
+      #guia {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        display: grid;
+        align-items: end;
+        justify-content: center;
+        padding: 1rem;
+        background: rgb(35 30 26 / 0.45);
+      }
+      #guia[hidden] { display: none; }
+      #guia article {
+        width: min(28rem, 100%);
+        max-height: calc(100dvh - 2rem);
+        overflow: auto;
+        background: #fffdf8;
+        color: var(--ink);
+        padding: 1.15rem 1.2rem 1.25rem;
+      }
+      #guia h2 { margin: 0 0 0.35rem; font-size: 1.7rem; }
+      #guia p { margin: 0.35rem 0 0.7rem; }
+      #guia h3 { margin: 0.8rem 0 0.25rem; font-size: 1.05rem; font-family: "Atkinson Hyperlegible", "Segoe UI", sans-serif; }
+      #guia ol { margin: 0; padding-left: 1.2rem; }
+      #guia li + li { margin-top: 0.25rem; }
+      #instalar-ahora { margin-top: 0.9rem; width: 100%; }
+      #cerrar-guia {
+        margin-top: 0.45rem;
+        background: transparent;
+        color: var(--sage-deep);
+        border: 0;
+        padding: 0.45rem 0;
+        font-weight: 700;
+      }
+      .acciones { display: flex; align-items: center; gap: 0.9rem; }
+      .aviso { color: var(--persimmon-deep); margin: 0.6rem 0 0; }
+      #avisos-nota { margin: 0; padding: 0.75rem 1.25rem; background: #fffdf8; color: var(--ink); }
+      header.barra {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.9rem 1.25rem;
+        background: var(--sage-deep);
+        color: var(--paper);
+      }
+      header.barra h1 { margin: 0; font-size: 1.8rem; letter-spacing: -0.03em; }
+      .salir { background: transparent; color: var(--paper); border: 0; margin: 0; padding: 0.4rem 0.2rem; }
+      #estados {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr 1fr;
+        gap: 0.8rem;
+        padding: 1rem 1.25rem 0.4rem;
+      }
+      #ver-papelera, #tirar, #restaurar, #grabar, .archivo {
+        background: transparent;
+        color: var(--sage-deep);
+        border: 1px solid var(--cedar);
+        padding: 0.45rem 0.7rem;
+      }
+      #ver-papelera { margin: 0 1.25rem 0.8rem; }
+      #ver-papelera[aria-pressed="true"] { background: var(--paper-deep); }
+      #tirar { color: var(--persimmon-deep); border-color: var(--persimmon); }
+      .acciones-hilo, .adjuntos { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+      .acciones-hilo { margin-top: 0.55rem; }
+      .adjuntos { margin-top: 0.55rem; }
+      .archivo { position: relative; }
+      .archivo input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      #nota-archivo, #nota-audio { color: var(--ink-soft); margin: 0.4rem 0 0; }
+      #nota-archivo:empty { display: none; }
+      .texto img { display: block; max-width: min(100%, 22rem); height: auto; margin-top: 0.45rem; }
+      .texto audio { display: block; width: min(100%, 22rem); margin-top: 0.45rem; }
+      .estado {
+        text-align: left;
+        background: #fffdf8;
+        border: 1px solid var(--line);
+        padding: 0.7rem 0.9rem 0.8rem;
+        color: var(--ink);
+      }
+      .estado strong {
+        display: block;
+        font-size: 2.6rem;
+        line-height: 0.9;
+        font-variant-numeric: tabular-nums;
+      }
+      .estado.activo strong { font-size: 3.4rem; }
+      .estado[data-estado="pendiente"].activo { background: #f6e4d8; border-color: var(--persimmon); }
+      .estado[data-estado="pendiente"].activo strong,
+      .estado[data-estado="pendiente"].activo span { color: var(--persimmon-deep); }
+      .estado[data-estado="vista"].activo strong { color: var(--cedar); }
+      .estado[data-estado="atendida"].activo strong { color: var(--sage-deep); }
+      body.con-sesion {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      body.con-sesion #app {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .cuerpo {
+        display: grid;
+        grid-template-columns: minmax(16rem, 28rem) 1fr;
+        grid-template-rows: minmax(0, 1fr);
+        flex: 1;
+        min-height: 0;
+        border-top: 1px solid var(--line);
+      }
+      #lista { display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+      .hilo {
+        display: grid;
+        grid-template-columns: 0.55rem 1fr auto;
+        gap: 0.75rem;
+        width: 100%;
+        text-align: left;
+        padding: 0.9rem 1rem;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+        color: inherit;
+      }
+      .hilo.activo { background: #fffdf8; }
+      .hilo b { display: block; font-size: 1rem; }
+      .hilo span { color: var(--ink-soft); font-size: 0.92rem; }
+      .hilo time { color: var(--cedar); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+      .marca { display: block; width: 0.55rem; height: 0.55rem; margin-top: 0.35rem; background: var(--sage); }
+      .marca.pendiente { background: var(--persimmon); }
+      .marca.vista { background: var(--cedar); }
+      #chat {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        border-left: 1px solid var(--line);
+        background: #fffdf8;
+        min-height: 0;
+        overflow: hidden;
+        transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #chat[data-estado="pendiente"] { background: #f6e4d8; }
+      #chat[data-estado="vista"] { background: #efe4d6; }
+      #chat[data-estado="atendida"] { background: #e4eee8; }
+      .quien { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 0.9rem 1.1rem; background: #fffdf8; }
+      .quien p { margin: 0.15rem 0 0; color: var(--ink-soft); }
+      #volver { display: none; background: transparent; border: 0; color: var(--sage-deep); padding: 0; }
+      #mensajes { padding: 1rem 1.1rem; min-height: 0; overflow: auto; }
+      .linea { display: grid; grid-template-columns: 6.2rem 1fr; gap: 0.75rem; margin: 0 0 0.8rem; }
+      .linea time { color: var(--cedar); font-size: 0.82rem; font-variant-numeric: tabular-nums; padding-top: 0.35rem; white-space: nowrap; }
+      .texto { margin: 0; background: #fffdf8; padding: 0.65rem 0.75rem; }
+      .texto a { color: var(--sage-deep); }
+      #respuesta { padding: 0.9rem 1.1rem 1.1rem; background: #fffdf8; }
+      .vacio { color: var(--ink-soft); padding: 1rem; }
+      @media (prefers-reduced-motion: reduce) {
+        #chat { transition: none; }
+      }
+      @media (max-width: 720px) {
+        #estados { grid-template-columns: repeat(3, 1fr); }
+        textarea { min-height: 2.6rem; }
+        #respuesta { padding: 0.55rem 0.8rem 0.7rem; }
+        .estado strong, .estado.activo strong { font-size: 2rem; }
+        .cuerpo { grid-template-columns: 1fr; }
+        #chat { border-left: 0; }
+        body.con-sesion.con-chat #lista, body.con-sesion:not(.con-chat) #chat { display: none; }
+        body.con-chat #volver { display: inline; }
+      }
+    </style>
+  </head>
+  <body class="esperando">
+    <a class="skip" href="#lista">Saltar a las conversaciones</a>
+    <form id="entrar" method="post" action="/bandeja/entrar">
+      <h1>Extensiones</h1>
+      <p>Entra para leer y contestar los mensajes.</p>
+      <p id="clave-aviso" class="aviso" hidden>La clave no coincide.</p>
+      <label for="clave">Clave</label>
+      <div class="clave">
+        <input id="clave" name="clave" type="password" autocomplete="current-password" required />
+        <button id="ver-clave" type="button" aria-pressed="false" aria-label="Mostrar clave">Ver</button>
+      </div>
+      <button type="submit">Entrar</button>
+      <button class="instalar" type="button">Instalar como aplicación</button>
+    </form>
+    <div id="app">
+      <header class="barra">
+        <h1>Extensiones</h1>
+        <div class="acciones">
+          <button id="avisos" class="salir" type="button">Avisos</button>
+          <button class="instalar salir" type="button">Instalar</button>
+          <form method="post" action="/bandeja/salir"><button class="salir" type="submit">Salir</button></form>
+        </div>
+      </header>
+      <p id="envio" class="aviso" hidden>No se pudo enviar. Revisa el formato, el tamaño y vuelve a intentar.</p>
+      <p id="avisos-nota" hidden>En iPhone, instala la bandeja en la pantalla de inicio y ábrela desde ahí. Luego pulsa Avisos.</p>
+      <nav id="estados" aria-label="Estados"></nav>
+      <button id="ver-papelera" type="button" aria-pressed="false">Papelera</button>
+      <div class="cuerpo">
+        <div id="lista"></div>
+        <section id="chat">
+          <div class="quien">
+            <div>
+              <button id="volver" type="button">Volver</button>
+              <h2 id="titulo">Elige una conversación</h2>
+              <p id="sub"></p>
+            </div>
+            <div class="acciones-hilo">
+              <button id="tirar" type="button" hidden>Mover a la papelera</button>
+              <button id="restaurar" type="button" hidden>Restaurar</button>
+            </div>
+          </div>
+          <div id="mensajes" aria-live="polite"></div>
+          <form id="respuesta" method="post" action="/bandeja/responder" enctype="multipart/form-data" hidden>
+            <input id="sesion" name="sesion" type="hidden" />
+            <input id="telefono" name="telefono" type="hidden" />
+            <label for="texto">Respuesta</label>
+            <textarea id="texto" name="texto" maxlength="4000"></textarea>
+            <div class="adjuntos">
+              <label class="archivo" for="archivo">Adjuntar archivo
+                <input id="archivo" name="archivo" type="file" accept="image/png,image/jpeg,image/webp,.pdf,.doc,.docx,audio/mpeg,audio/mp4,audio/ogg,audio/aac,.mp3,.m4a,.ogg,.opus,.aac" />
+              </label>
+              <button id="grabar" type="button">Grabar audio</button>
+            </div>
+            <p id="nota-archivo"></p>
+            <p id="nota-audio" hidden>Este navegador graba un formato que WhatsApp no acepta. Adjunta un mp3, m4a u ogg.</p>
+            <button class="enviar" type="submit">Enviar por WhatsApp</button>
+          </form>
+        </section>
+      </div>
+    </div>
+    <div id="guia" hidden>
+      <article role="dialog" aria-modal="true" aria-labelledby="guia-titulo">
+        <h2 id="guia-titulo">Instalar la bandeja</h2>
+        <p>Queda en la pantalla del teléfono, con el nombre y el ícono de Extensiones.</p>
+        <button id="instalar-ahora" type="button" hidden>Instalar ahora</button>
+        <h3>Android</h3>
+        <ol>
+          <li>Abre esta página en Chrome.</li>
+          <li>Pulsa Instalar ahora si aparece arriba.</li>
+          <li>Si no aparece, abre el menú de los tres puntos.</li>
+          <li>Elige Instalar aplicación o Añadir a pantalla principal.</li>
+        </ol>
+        <h3>iPhone</h3>
+        <ol>
+          <li>Abre esta página en Safari.</li>
+          <li>Pulsa Compartir, el cuadrado con la flecha.</li>
+          <li>Elige Añadir a pantalla de inicio.</li>
+          <li>Pulsa Añadir.</li>
+        </ol>
+        <button id="cerrar-guia" type="button">Cerrar</button>
+      </article>
+    </div>
+    <script is:inline>
+      const orden = ["pendiente", "vista", "atendida"];
+      const nombres = { pendiente: "Pendiente", vista: "Vista", atendida: "Atendida", papelera: "Papelera" };
+      let grabacion = null;
+      const voces = { paciente: "Paciente", bot: "Menú", equipo: "Equipo" };
+      let sesion = "";
+      let firma = "";
+      let telefonoAbierto = "";
+      const query = () => {
+        const q = new URLSearchParams(location.search);
+        const pedido = q.get("e");
+        const e = orden.includes(pedido) || pedido === "papelera" ? pedido : "pendiente";
+        return { e, c: q.get("c") || "" };
+      };
+      const tituloDe = (telefono) =>
+        telefono.startsWith("502") && telefono.length === 11
+          ? "+502 " + telefono.slice(3, 7) + " " + telefono.slice(7)
+          : "+" + telefono;
+      function sesionVisible(activa) {
+        document.body.classList.toggle("sin-sesion", !activa);
+        document.body.classList.toggle("con-sesion", activa);
+        document.body.classList.remove("esperando");
+      }
+      function ir(estado, telefono) {
+        const q = new URLSearchParams();
+        q.set("e", estado);
+        if (telefono) q.set("c", telefono);
+        history.pushState({}, "", "/bandeja?" + q);
+        firma = "";
+        pedir();
+      }
+      async function abrir(telefono, estado) {
+        const destino = estado === "pendiente" ? "vista" : estado;
+        if (estado === "pendiente" && sesion) {
+          const cuerpo = new URLSearchParams({ sesion, telefono });
+          await fetch("/bandeja/ver", { method: "POST", body: cuerpo });
+        }
+        ir(destino, telefono);
+      }
+      function pintar(datos) {
+        sesion = datos.sesion || sesion;
+        const { e, c } = query();
+        document.body.classList.toggle("con-chat", Boolean(c));
+        const marca = orden.map((estado) => estado + datos.conteos[estado]).join() + "|" + (datos.papelera || 0) + "|" + datos.hilos.map((h) => h.telefono + h.ultimo).join() + "|" + datos.lineas.map((l) => l.id + (l.mime || "")).join() + "|" + c + datos.estado;
+        const estados = document.querySelector("#estados");
+        const lista = document.querySelector("#lista");
+        const mensajes = document.querySelector("#mensajes");
+        const chat = document.querySelector("#chat");
+        if (marca !== firma) {
+          const cerca = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 140;
+          estados.replaceChildren();
+          for (const estado of orden) {
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "estado" + (estado === e ? " activo" : "");
+            boton.dataset.estado = estado;
+            boton.setAttribute("aria-pressed", estado === e ? "true" : "false");
+            const cifra = document.createElement("strong");
+            cifra.className = "cifra";
+            cifra.textContent = String(datos.conteos[estado] || 0);
+            const nombre = document.createElement("span");
+            nombre.textContent = nombres[estado];
+            boton.append(cifra, nombre);
+            boton.addEventListener("click", () => ir(estado, ""));
+            estados.append(boton);
+          }
+          lista.replaceChildren();
+          if (!datos.hilos.length) lista.append(vacio(e === "papelera" ? "Nada en la papelera." : "Nada en " + nombres[e].toLowerCase() + "."));
+          for (const hilo of datos.hilos) {
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "hilo" + (hilo.telefono === c ? " activo" : "");
+            const marcaEstado = document.createElement("i");
+            marcaEstado.className = "marca " + hilo.estado;
+            const texto = document.createElement("span");
+            const nombre = document.createElement("b");
+            nombre.textContent = hilo.titulo;
+            const vista = document.createElement("span");
+            vista.textContent = hilo.vista;
+            texto.append(nombre, vista);
+            const hora = document.createElement("time");
+            hora.textContent = new Intl.DateTimeFormat("es-GT", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guatemala" }).format(hilo.ultimo);
+            boton.append(marcaEstado, texto, hora);
+            boton.addEventListener("click", () => abrir(hilo.telefono, hilo.estado));
+            lista.append(boton);
+          }
+          mensajes.replaceChildren();
+          if (!c) mensajes.append(vacio("Elige una conversación."));
+          else if (!datos.lineas.length) mensajes.append(vacio("Todavía no hay mensajes guardados."));
+          else {
+            for (const linea of datos.lineas) {
+              const fila = document.createElement("article");
+              fila.className = "linea";
+              const hora = document.createElement("time");
+              hora.textContent = linea.hora;
+              const cuerpo = document.createElement("p");
+              cuerpo.className = "texto";
+              cuerpo.textContent = (voces[linea.quien] || "Equipo") + " · " + linea.texto;
+              mostrarMedio(linea, cuerpo);
+              fila.append(hora, cuerpo);
+              mensajes.append(fila);
+            }
+          }
+          chat.dataset.estado = datos.estado || "";
+          document.querySelector("#titulo").textContent = c ? tituloDe(c) : "Elige una conversación";
+          document.querySelector("#sub").textContent = datos.estado ? nombres[datos.estado] : "";
+          document.querySelector("#tirar").hidden = !c || datos.estado !== "atendida";
+          document.querySelector("#restaurar").hidden = !c || datos.estado !== "papelera";
+          firma = marca;
+          if (cerca) mensajes.scrollTop = mensajes.scrollHeight;
+        }
+        const respuesta = document.querySelector("#respuesta");
+        document.querySelector("#sesion").value = sesion;
+        const campo = document.querySelector("#telefono");
+        if (campo.value !== c) {
+          campo.value = c;
+          if (telefonoAbierto !== c) {
+            document.querySelector("#texto").value = "";
+            document.querySelector("#archivo").value = "";
+            document.querySelector("#nota-archivo").textContent = "";
+          }
+          telefonoAbierto = c;
+        }
+        respuesta.hidden = !c || datos.estado === "papelera";
+        const verPapelera = document.querySelector("#ver-papelera");
+        verPapelera.textContent = "Papelera (" + (datos.papelera || 0) + ")";
+        verPapelera.setAttribute("aria-pressed", e === "papelera" ? "true" : "false");
+        document.querySelector("#envio").hidden = new URLSearchParams(location.search).get("x") !== "envio";
+      }
+      function mostrarMedio(linea, cuerpo) {
+        if (!linea.medio) return;
+        const url = "/bandeja/medio/" + encodeURIComponent(linea.medio);
+        const mime = linea.mime || "";
+        if (mime.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = linea.nombre || "Imagen enviada";
+          cuerpo.append(img);
+          return;
+        }
+        if (mime.startsWith("audio/")) {
+          const audio = document.createElement("audio");
+          audio.controls = true;
+          audio.src = url;
+          cuerpo.append(audio);
+          return;
+        }
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.textContent = linea.nombre || "Ver archivo";
+        cuerpo.append(document.createTextNode(" "), enlace);
+      }
+      async function mover(accion) {
+        const { c } = query();
+        if (!c || !sesion) return;
+        const cuerpo = new URLSearchParams({ sesion, telefono: c, accion });
+        const respuesta = await fetch("/bandeja/papelera", { method: "POST", body: cuerpo });
+        if (!respuesta.ok) return;
+        firma = "";
+        ir(accion === "tirar" ? "papelera" : "atendida", c);
+      }
+      function vacio(texto) {
+        const p = document.createElement("p");
+        p.className = "vacio";
+        p.textContent = texto;
+        return p;
+      }
+      async function pedir() {
+        const { e, c } = query();
+        try {
+          const respuesta = await fetch("/bandeja/novedades?e=" + encodeURIComponent(e) + "&c=" + encodeURIComponent(c), { cache: "no-store" });
+          if (respuesta.status === 401) {
+            sesionVisible(false);
+            document.querySelector("#clave-aviso").hidden = new URLSearchParams(location.search).get("e") !== "1";
+            return;
+          }
+          if (!respuesta.ok) return;
+          sesionVisible(true);
+          pintar(await respuesta.json());
+        } catch {}
+      }
+      function conectar() {
+        if (!document.body.classList.contains("con-sesion")) return;
+        const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
+        const socket = new WebSocket(protocolo + "//" + location.host + "/bandeja/vivo");
+        socket.onmessage = () => pedir();
+        socket.onclose = () => setTimeout(conectar, 4000);
+      }
+      document.querySelector("#ver-clave").addEventListener("click", () => {
+        const campo = document.querySelector("#clave");
+        const visible = campo.type === "password";
+        campo.type = visible ? "text" : "password";
+        const boton = document.querySelector("#ver-clave");
+        boton.textContent = visible ? "Ocultar" : "Ver";
+        boton.setAttribute("aria-pressed", visible ? "true" : "false");
+        boton.setAttribute("aria-label", visible ? "Ocultar clave" : "Mostrar clave");
+      });
+      const guia = document.querySelector("#guia");
+      const instalarAhora = document.querySelector("#instalar-ahora");
+      let instalacion = null;
+      const yaInstalada = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      if (yaInstalada) document.querySelectorAll(".instalar").forEach((boton) => { boton.hidden = true; });
+      window.addEventListener("beforeinstallprompt", (evento) => {
+        evento.preventDefault();
+        instalacion = evento;
+        instalarAhora.hidden = false;
+      });
+      document.querySelectorAll(".instalar").forEach((boton) => {
+        boton.addEventListener("click", () => { guia.hidden = false; });
+      });
+      instalarAhora.addEventListener("click", async () => {
+        if (!instalacion) return;
+        instalacion.prompt();
+        await instalacion.userChoice;
+        instalacion = null;
+        instalarAhora.hidden = true;
+        guia.hidden = true;
+      });
+      document.querySelector("#cerrar-guia").addEventListener("click", () => { guia.hidden = true; });
+      guia.addEventListener("click", (evento) => { if (evento.target === guia) guia.hidden = true; });
+      function desdeClave(valor) {
+        const base = valor.replace(/-/g, "+").replace(/_/g, "/");
+        const binario = atob(base + "=".repeat((4 - (base.length % 4)) % 4));
+        const bytes = new Uint8Array(binario.length);
+        for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+        return bytes;
+      }
+      async function marcarAvisosActivos() {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window) || Notification.permission !== "granted") return;
+        const registro = await navigator.serviceWorker.ready;
+        const actual = await registro.pushManager.getSubscription();
+        if (actual) document.querySelector("#avisos").textContent = "Avisos activos";
+      }
+      document.querySelector("#avisos").addEventListener("click", async () => {
+        const nota = document.querySelector("#avisos-nota");
+        const ios = /iPhone|iPad/.test(navigator.userAgent);
+        const instalada = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+        if (ios && !instalada) {
+          nota.hidden = false;
+          nota.textContent = "En iPhone, instala la bandeja en la pantalla de inicio y ábrela desde ahí. Luego pulsa Avisos.";
+          return;
+        }
+        if (!("Notification" in window) || !("PushManager" in window)) {
+          nota.hidden = false;
+          nota.textContent = "Este navegador no puede mostrar avisos. En Android usa Chrome. En iPhone usa la aplicación instalada.";
+          return;
+        }
+        const permiso = await Notification.requestPermission();
+        if (permiso !== "granted") {
+          nota.hidden = false;
+          nota.textContent = "El teléfono no permitió los avisos.";
+          return;
+        }
+        const registro = await navigator.serviceWorker.ready;
+        const clave = await fetch("/bandeja/avisos", { cache: "no-store" }).then((respuesta) => respuesta.json());
+        if (!clave.publica) {
+          nota.hidden = false;
+          nota.textContent = "Los avisos todavía no están configurados.";
+          return;
+        }
+        let suscripcion = await registro.pushManager.getSubscription();
+        if (!suscripcion) {
+          suscripcion = await registro.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: desdeClave(clave.publica),
+          });
+        }
+        const alta = await fetch("/bandeja/avisos", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(suscripcion),
+        });
+        nota.hidden = !alta.ok;
+        if (alta.ok) document.querySelector("#avisos").textContent = "Avisos activos";
+        else nota.textContent = "No se pudo activar el aviso. Intenta otra vez.";
+      });
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/bandeja/sw.js").then(marcarAvisosActivos);
+      }
+      document.querySelector("#volver").addEventListener("click", () => ir(query().e, ""));
+      document.querySelector("#ver-papelera").addEventListener("click", () => ir("papelera", ""));
+      document.querySelector("#tirar").addEventListener("click", () => mover("tirar"));
+      document.querySelector("#restaurar").addEventListener("click", () => mover("restaurar"));
+      document.querySelector("#archivo").addEventListener("change", () => {
+        const archivo = document.querySelector("#archivo").files[0];
+        document.querySelector("#nota-archivo").textContent = archivo ? archivo.name : "";
+        document.querySelector("#nota-audio").hidden = true;
+      });
+      document.querySelector("#respuesta").addEventListener("submit", (evento) => {
+        const texto = document.querySelector("#texto").value.trim();
+        const archivo = document.querySelector("#archivo").files[0];
+        if (!texto && !archivo) evento.preventDefault();
+      });
+      document.querySelector("#grabar").addEventListener("click", async () => {
+        const boton = document.querySelector("#grabar");
+        const nota = document.querySelector("#nota-audio");
+        if (grabacion) {
+          grabacion.stop();
+          return;
+        }
+        const tipos = ["audio/ogg;codecs=opus", "audio/mp4"];
+        const tipo = tipos.find((candidato) => window.MediaRecorder && MediaRecorder.isTypeSupported(candidato));
+        if (!tipo) {
+          nota.hidden = false;
+          return;
+        }
+        let flujo;
+        try {
+          flujo = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch {
+          nota.hidden = false;
+          nota.textContent = "El navegador no permitió usar el micrófono.";
+          return;
+        }
+        const recorder = new MediaRecorder(flujo, { mimeType: tipo });
+        const partes = [];
+        recorder.ondataavailable = (evento) => { if (evento.data.size) partes.push(evento.data); };
+        recorder.onstop = () => {
+          flujo.getTracks().forEach((pista) => pista.stop());
+          const extension = tipo.startsWith("audio/ogg") ? "ogg" : "m4a";
+          const archivo = new File(partes, "audio." + extension, { type: tipo.split(";")[0] });
+          const lista = new DataTransfer();
+          lista.items.add(archivo);
+          document.querySelector("#archivo").files = lista.files;
+          document.querySelector("#nota-archivo").textContent = "Audio listo para enviar.";
+          nota.hidden = true;
+          boton.textContent = "Grabar audio";
+          grabacion = null;
+        };
+        grabacion = recorder;
+        recorder.start();
+        boton.textContent = "Detener";
+      });
+      window.addEventListener("popstate", () => { firma = ""; pedir(); });
+      pedir().then(conectar);
+      setInterval(() => { if (document.visibilityState === "visible") pedir(); }, 20000);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "agente-wb",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cf dev",
+    "build": "cf build",
+    "deploy": "cf deploy",
+    "types": "cf types",
+    "postinstall": "node web/enlazar-astro.mjs",
+    "pagina": "node web/enlazar-astro.mjs && astro build --root web && node web/volcar.mjs",
+    "test": "node --experimental-strip-types --test test/agente.test.ts test/bandeja.test.ts test/avisos.test.ts test/equipo.test.ts test/gasto.test.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "beta",
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
+    "@fontsource/petrona": "^5.3.0",
+    "cf": "0.15.0",
+    "pagina-astro": "npm:astro@^7.3.8",
+    "pdf-lib": "^1.17.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+  }
+}
